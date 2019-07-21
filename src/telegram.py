@@ -212,12 +212,8 @@ def percentile(N, percent):
     return d0 + d1
 
 def queue_stat():
-	a = []
-	def func(item):
-		nonlocal a
-		a.append(( datetime.now() - item.created ).total_seconds())
-		return False # dont actually delete
-	message_queue.delete(func)
+	now = int(datetime.now().timestamp())
+	a = message_queue.getstats(now)
 	return {
 		"queue_size": len(a),
 		"queue_latency_avg": 0 if len(a) == 0 else ( sum(a) / len(a) ),
