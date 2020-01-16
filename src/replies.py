@@ -39,6 +39,7 @@ types = NumericEnum([
 	"GIVEN_COOLDOWN",
 	"PROMOTED_MOD",
 	"PROMOTED_ADMIN",
+	"IMAGES_ALLOWED",
 	"KARMA_THANK_YOU",
 	"KARMA_NOTIFICATION",
 	"TRIPCODE_INFO",
@@ -101,6 +102,7 @@ format_strs = {
 			(deleted and " (message also deleted)" or "") ),
 	types.PROMOTED_MOD: em("You've been promoted to moderator, run /modhelp for a list of commands."),
 	types.PROMOTED_ADMIN: em("You've been promoted to admin, run /adminhelp for a list of commands."),
+	types.IMAGES_ALLOWED: em("Your images rights have just been activated !"),
 	types.KARMA_THANK_YOU: em("You just gave this user some sweet karma, awesome!"),
 	types.KARMA_NOTIFICATION:
 		em( "You've just been given sweet karma! (check /info to see your karma"+

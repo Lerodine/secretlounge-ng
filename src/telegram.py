@@ -3,6 +3,7 @@ import logging
 import time
 import re
 import json
+from datetime import date, datetime, timedelta, timezone
 
 import src.core as core
 import src.replies as rp
@@ -147,6 +148,15 @@ def allow_message_text(text):
 def calc_spam_score(ev):
 	if not allow_message_text(ev.text) or not allow_message_text(ev.caption):
 		return 999
+	c_user = UserContainer(ev.from_user)
+	user_rank = RANKS[core.get_info(c_user).kwargs["rank"]]
+	if ev.content_type in ("photo", "video", "gif", "sticker","video/mp4") and user_rank <= 0:
+		if (datetime.now() - core.get_info(c_user).kwargs["joined"]).days <= 3:
+			return 999
+		else:
+			with db.modifyUser(id=core.get_info(c_user).kwargs["real_id"]) as user:
+				user.rank = 1
+				core._push_system_message(rp.Reply(rp.types.IMAGES_ALLOWED))
 
 	s = SCORE_BASE_MESSAGE
 	if (ev.forward_from is not None or ev.forward_from_chat is not None
@@ -204,6 +214,9 @@ def resend_message(chat_id, ev, reply_to=None):
 		# forward message instead of re-sending the contents
 		return bot.forward_message(chat_id, ev.chat.id, ev.message_id)
 
+	c_user = UserContainer(ev.from_user)
+	temp_oid = core.get_info(c_user).kwargs["id"]
+
 	kwargs = {}
 	if reply_to is not None:
 		kwargs["reply_to_message_id"] = reply_to
@@ -211,40 +224,45 @@ def resend_message(chat_id, ev, reply_to=None):
 	# re-send message based on content type
 	if ev.content_type == "text":
 		pass
-	elif ev.content_type == "photo":
-		photo = sorted(ev.photo, key=lambda e: e.width*e.height, reverse=True)[0]
-		return bot.send_photo(chat_id, photo.file_id, caption=ev.caption, **kwargs)
-	elif ev.content_type == "audio":
-		for prop in ["performer", "title"]:
-			kwargs[prop] = getattr(ev.audio, prop)
-		return bot.send_audio(chat_id, ev.audio.file_id, caption=ev.caption, **kwargs)
-	elif ev.content_type == "document":
-		return bot.send_document(chat_id, ev.document.file_id, caption=ev.caption, **kwargs)
-	elif ev.content_type == "video":
-		return bot.send_video(chat_id, ev.video.file_id, caption=ev.caption, **kwargs)
-	elif ev.content_type == "voice":
-		return bot.send_voice(chat_id, ev.voice.file_id, caption=ev.caption, **kwargs)
-	elif ev.content_type == "video_note":
-		return bot.send_video_note(chat_id, ev.video_note.file_id, **kwargs)
-	elif ev.content_type == "location":
-		for prop in ["latitude", "longitude"]:
-			kwargs[prop] = getattr(ev.location, prop)
-		return bot.send_location(chat_id, **kwargs)
-	elif ev.content_type == "venue":
-		for prop in ["latitude", "longitude", "title", "address", "foursquare_id"]:
-			kwargs[prop] = getattr(ev.venue, prop)
-		return bot.send_venue(chat_id, **kwargs)
-	elif ev.content_type == "contact":
-		for prop in ["phone_number", "first_name", "last_name"]:
-			kwargs[prop] = getattr(ev.contact, prop)
-		return bot.send_contact(chat_id, **kwargs)
-	elif ev.content_type == "sticker":
-		return bot.send_sticker(chat_id, ev.sticker.file_id, **kwargs)
 	else:
-		raise NotImplementedError("content_type = %s" % ev.content_type)
+		if ev.caption is None:
+			new_caption = temp_oid + " :"
+		else:
+			new_caption = temp_oid + " :\n" + ev.caption
+		if ev.content_type == "photo":
+			photo = sorted(ev.photo, key=lambda e: e.width*e.height, reverse=True)[0]
+			return bot.send_photo(chat_id, photo.file_id, caption=new_caption, **kwargs)
+		elif ev.content_type == "audio":
+			for prop in ["performer", "title"]:
+				kwargs[prop] = getattr(ev.audio, prop)
+			return bot.send_audio(chat_id, ev.audio.file_id, caption=new_caption, **kwargs)
+		elif ev.content_type == "document":
+			return bot.send_document(chat_id, ev.document.file_id, caption=new_caption, **kwargs)
+		elif ev.content_type == "video":
+			return bot.send_video(chat_id, ev.video.file_id, caption=new_caption, **kwargs)
+		elif ev.content_type == "voice":
+			return bot.send_voice(chat_id, ev.voice.file_id, caption=new_caption, **kwargs)
+		elif ev.content_type == "video_note":
+			return bot.send_video_note(chat_id, ev.video_note.file_id, **kwargs)
+		elif ev.content_type == "location":
+			for prop in ["latitude", "longitude"]:
+				kwargs[prop] = getattr(ev.location, prop)
+			return bot.send_location(chat_id, **kwargs)
+		elif ev.content_type == "venue":
+			for prop in ["latitude", "longitude", "title", "address", "foursquare_id"]:
+				kwargs[prop] = getattr(ev.venue, prop)
+			return bot.send_venue(chat_id, **kwargs)
+		elif ev.content_type == "contact":
+			for prop in ["phone_number", "first_name", "last_name"]:
+				kwargs[prop] = getattr(ev.contact, prop)
+			return bot.send_contact(chat_id, **kwargs)
+		elif ev.content_type == "sticker":
+			return bot.send_sticker(chat_id, ev.sticker.file_id, **kwargs)
+		else:
+			raise NotImplementedError("content_type = %s" % ev.content_type)
 
 	# for text
-	s = ev.text
+	s = temp_oid + " :\n" + ev.text
 	if ev.entities is not None:
 		for ent in ev.entities:
 			if ent.type == "text_link":
@@ -475,6 +493,8 @@ def relay(ev):
 			registered_commands[c](ev)
 		return
 	elif ev.content_type == "text" and ev.text.strip() == "+1":
+		return cmd_plusone(ev)
+	elif ev.content_type == "text" and ev.text.strip() == "Based":
 		return cmd_plusone(ev)
 
 	# filter disallowed media types

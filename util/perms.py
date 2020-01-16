@@ -9,7 +9,7 @@ from blacklist import Database, detect_dbs
 
 # backend
 
-def list_privileged_users(db, cond="rank > 0"):
+def list_privileged_users(db, cond="rank > 1"):
 	sql = "SELECT id, username, realname, rank, left, lastActive FROM users WHERE " + cond
 	c = db.execute(sql)
 	ret = {}
@@ -55,9 +55,9 @@ def c_set(d, argv):
 	rank = "user" if len(argv) < 3 else argv[2]
 
 	if not rank.isdigit():
-		rank = ({"admin": 100, "mod": 10, "user": 0})[rank.lower()]
+		rank = ({"admin": 100, "mod": 10, "user_with_images": 1, "user": 0})[rank.lower()]
 	rank = int(rank)
-	if rank not in (100, 10, 0):
+	if rank not in (100, 10, 1, 0):
 		return logging.error("Invalid rank given")
 	set_user_rank(db, id, rank)
 	logging.info("Success")

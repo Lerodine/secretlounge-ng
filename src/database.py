@@ -60,8 +60,7 @@ class User():
 		alpha = "0123456789abcdefghijklmnopqrstuv"
 		return ''.join(alpha[n%32] for n in (value, value>>5, value>>10, value>>15))
 	def getObfuscatedKarma(self):
-		offset = round(abs(self.karma * 0.2) + 2)
-		return self.karma + randint(0, offset + 1) - offset
+		return self.karma
 	def getFormattedName(self):
 		if self.username is not None:
 			return "@" + self.username
@@ -96,6 +95,9 @@ class User():
 			self.warnExpiry = datetime.now() + timedelta(hours=WARN_EXPIRE_HOURS)
 		else:
 			self.warnExpiry = None
+	def setImgsId(self):
+		if (datetime.now() - self.joined).days > 3 and self.rank == 0:
+			self.rank = 1
 
 # abstract db
 
