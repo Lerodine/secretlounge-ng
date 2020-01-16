@@ -151,12 +151,12 @@ def calc_spam_score(ev):
 	c_user = UserContainer(ev.from_user)
 	user_rank = RANKS[core.get_info(c_user).kwargs["rank"]]
 	if ev.content_type in ("photo", "video", "gif", "sticker","video/mp4", "document") and user_rank <= 0:
-		if (datetime.now() - core.get_info(c_user).kwargs["joined"]).days <= 3:
+		if (datetime.now() - core.get_info(c_user).kwargs["joined"]).days <= 1:
 			return 999
 		else:
 			with db.modifyUser(id=core.get_info(c_user).kwargs["real_id"]) as user:
-				user.rank = 1
-				core._push_system_message(rp.Reply(rp.types.IMAGES_ALLOWED))
+				user.rank = RANKS.user_with_images
+				core._push_system_message(rp.Reply(rp.types.IMAGES_ALLOWED), who=user)
 
 	s = SCORE_BASE_MESSAGE
 	if (ev.forward_from is not None or ev.forward_from_chat is not None
