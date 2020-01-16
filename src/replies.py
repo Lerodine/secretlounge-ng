@@ -124,7 +124,7 @@ format_strs = {
 		( em("\ncontact:") + " {contact}" ) if contact else "",
 	types.ERR_ALREADY_UPVOTED: em("You have already upvoted this message."),
 	types.ERR_UPVOTE_OWN_MESSAGE: em("You can't upvote your own message."),
-	types.ERR_SPAMMY: em("Your message has not been sent. Avoid sending messages too fast, try again later."),
+	types.ERR_SPAMMY: em("Your message has not been sent. Avoid sending messages too fast, too long or images when you don't have the authorization yet. try again later."),
 	types.ERR_SPAMMY_SIGN: em("Your message has not been sent. Avoid using /sign too often, try again later."),
 	types.ERR_INVALID_TRIP_FORMAT:
 		em("Given tripcode is not valid, the format is ")+

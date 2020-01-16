@@ -150,7 +150,7 @@ def calc_spam_score(ev):
 		return 999
 	c_user = UserContainer(ev.from_user)
 	user_rank = RANKS[core.get_info(c_user).kwargs["rank"]]
-	if ev.content_type in ("photo", "video", "gif", "sticker","video/mp4") and user_rank <= 0:
+	if ev.content_type in ("photo", "video", "gif", "sticker","video/mp4", "document") and user_rank <= 0:
 		if (datetime.now() - core.get_info(c_user).kwargs["joined"]).days <= 3:
 			return 999
 		else:
